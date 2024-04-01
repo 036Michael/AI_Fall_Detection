@@ -66,6 +66,8 @@ video_path = 0
 cap = cv2.VideoCapture(video_path)
 
 # 定義地面多邊形
+
+# 左上 右上 左下 右下
 ground_points = [(100, 200), (500, 200), (500, 400), (100, 400)]
 ground_polygon = Polygon(ground_points)
 print("ground_polygon",ground_polygon)
@@ -167,8 +169,6 @@ while cap.isOpened():
 
                 if ground_polygon.contains(object_center):
                     print("警報：有物件進入地面範圍內！")
-                    
-                    
                     
                     if y2 - y1 > x2 - x1 :                
                         text = f"{classes} {conf})standing".format(classes, conf)
