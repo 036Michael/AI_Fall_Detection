@@ -55,20 +55,17 @@ def create_folder(folder_path):
                 return new_folder_path
             i += 1
 
-
-
 # Load the YOLOv8 model
 model = YOLO('yolov8n-pose.pt')
 
 # Open the video file
 # video_path =  "./assets/fall3.mp4"
-video_path = 0
+video_path = 1  # 1 for DroidCam   # 0 for webcam
 cap = cv2.VideoCapture(video_path)
 
 # 定義地面多邊形
-
-# 左上 右上 左下 右下
-ground_points = [(100, 200), (500, 200), (500, 400), (100, 400)]
+# 左上 右上 右下 左下 
+ground_points = [(100, 200), (600, 200), (600, 400), (100, 400)]
 ground_polygon = Polygon(ground_points)
 print("ground_polygon",ground_polygon)
 
@@ -77,11 +74,9 @@ o = 0 # 截圖編號
 frame_count = 0  # 計算幀數
 start_time = time.time() # 開始時間
 
-
 # 創建一個新的文件夾
 formatted_time,ss,label= timeFormat()
 new_folder = create_folder('C:/Users/AIDL-09/Desktop/fall_detection/fall/screenshots/{}'.format(ss))  # 創建一個新的文件夾
-
 
 # Loop through the video frames
 while cap.isOpened():
@@ -135,28 +130,22 @@ while cap.isOpened():
         for i in range(len(ground_points)):
             pt1 = ground_points[i]
             pt2 = ground_points[(i+1) % len(ground_points)]
-            cv2.line(frame, pt1, pt2, (0, 255, 0), 3)
+            cv2.line(frame, pt1, pt2, (0, 255, 0), 1)
                 
-        # fall detection / 跌倒偵測
+        # 提取物件的邊界框
         for i in results[0].boxes.xyxy:
             x1 = int(i[0])
             y1 = int(i[1])
             x2 = int(i[2])
             y2 = int(i[3])
-            # print("###################")
-            
-            # print("boxes's i",i)
-            # print("###################")
             
             annotator = Annotator(frame)
-            
             
             conf = results[0].boxes.conf[0]
             conf = str(conf)
             conf = conf[6:11]
-            
+
             classes = results[0].names[0]
-            # print("resultssss:",classes)
             
             boxess = [{'bbox': [x1,y1,x2,y2]}]
             for obj in boxess:
@@ -170,15 +159,23 @@ while cap.isOpened():
                 if ground_polygon.contains(object_center):
                     print("警報：有物件進入地面範圍內！")
                     
-                    if y2 - y1 > x2 - x1 :                
-                        text = f"{classes} {conf})standing".format(classes, conf)
+                    # fall detection / 跌倒偵測
+                    if y2 - y1 > x2 - x1 :   # 非跌倒        
+                        text = f"{classes} {conf})non-fall".format(classes, conf)
                         print(text)
                         annotator.box_label(i, text, color=(255, 0, 0))                
                         # print("standing")
-                    else:
+                    else: # 跌倒
                         text = f"{classes} {conf})fall down".format(classes, conf)
                         annotator.box_label(i, text, color=(255, 0, 0))
                         annotated_frame = annotator.result()
+                        
+                        for i in range(len(ground_points)):
+                            pt1 = ground_points[i]
+                            pt2 = ground_points[(i+1) % len(ground_points)]
+                            cv2.line(frame, pt1, pt2, (0, 0, 255), 1)
+                            cv2.putText(frame, "alert", (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
                         
                         cv2.rectangle(annotated_frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 0, 255), 2)
                         
@@ -199,7 +196,7 @@ while cap.isOpened():
 
    
         # Display the annotated frame
-        cv2.imshow("YOLOv8 Tracking", frame)
+        cv2.imshow("cam 1", frame)
         
 
 

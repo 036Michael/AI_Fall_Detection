@@ -6,7 +6,7 @@ import requests
 
 def check_response_Line(last_screenshot_time,image):
     url = "https://notify-api.line.me/api/notify"
-    token = "Z3knL5oA7dzsVDbFrZ63fuAIiusZltjuiTLSL5poVIk"
+    token = "OLYczNdlOmAzBQ8ztc07mIan87MHfkJfPHuBvW4XQXk"
     # token = "OLYczNdlOmAzBQ8ztc07mIan87MHfkJfPHuBvW4XQXk" #備用token 宗燁和家南的
     headers = {
         "Authorization": f"Bearer {token}"
