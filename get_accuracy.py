@@ -7,7 +7,7 @@ from ultralytics.utils.plotting import Annotator  # ultralytics.yolo.utils.plott
 import lineNotify
 from shapely.geometry import Polygon, Point
 
-send_notify = False;
+send_notify = True;  # True for sending Line-Notify / False for not sending Line-Notify
 
 def timeFormat():
     
@@ -66,10 +66,8 @@ video_path = 0  # 1 for DroidCam   # 0 for webcam
 cap = cv2.VideoCapture(video_path)
 
 # 定義地面多邊形
-# 左上 右上 左下 右下  (x,y) 
-# ground_points = [(100, 200), (500, 200), (500, 400), (100, 400)]
-ground_points = [(100, 100), (300, 90), (550, 350), (200, 300)]
-
+# 左上 右上 右下 左下 
+ground_points = [(100, 200), (600, 200), (600, 400), (100, 400)]
 ground_polygon = Polygon(ground_points)
 print("ground_polygon",ground_polygon)
 
@@ -89,7 +87,6 @@ while cap.isOpened():
 
     if success:
         # Run YOLOv8 tracking on the frame, persisting tracks between frames / 在幀上運行 YOLOv8 跟踪，在幀之間保留跟踪
-        print(frame.shape)
         results = model.predict(frame,conf =0.8) 
 
         # FPS
@@ -184,25 +181,36 @@ while cap.isOpened():
                         
                         cv2.rectangle(annotated_frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 0, 255), 2)
                         
-                        if send_notify == True:
-                            current_time = time.time()
-                            if current_time - last_screenshot_time >= 10  :  # 每n秒截圖一次
-                                cv2.imwrite(f"{new_folder}/{o}.jpg", annotated_frame)
-                                image = f"{new_folder}/{o}.jpg"
-                                o += 1
-                                last_screenshot_time = current_time
-                                t_formatted,ss,label = timeFormat()
-                                print("_____________________________________")
-                                print()
-                                print("有人跌倒！已發送Line-Notify到群組！")
-                                lineNotify.check_response_Line(t_formatted,image)
+                        cv2.imwrite(f"{new_folder}/{o}.jpg", annotated_frame)
+                        image = f"{new_folder}/{o}.jpg"
+                        o += 1
+                        # last_screenshot_time = current_time
+                        t_formatted,ss,label = timeFormat()
+                        print("_____________________________________")
+                        print()
+                        print("截圖:" , o ,"張" )
+                        print("有人跌倒！已發送Line-Notify到群組！")
+                        
+                        # current_time = time.time()
+                        # if send_notify == True:
+                        #     if current_time - last_screenshot_time >= 10  :  # 每n秒截圖一次
+                        #         cv2.imwrite(f"{new_folder}/{o}.jpg", annotated_frame)
+                        #         image = f"{new_folder}/{o}.jpg"
+                        #         o += 1
+                        #         last_screenshot_time = current_time
+                        #         t_formatted,ss,label = timeFormat()
+                        #         print("_____________________________________")
+                        #         print()
+                        #         print("截圖:" , o ,"張" )
+                        #         print("有人跌倒！已發送Line-Notify到群組！")
+                                # lineNotify.check_response_Line(t_formatted,image)
                                 # print(f"{new_folder}/{o}.jpg")
                                 # print("fall down")  
 
 
    
         # Display the annotated frame
-        cv2.imshow("cam 2", frame)
+        cv2.imshow("cam 1", frame)
         
 
 
