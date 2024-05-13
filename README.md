@@ -1,3 +1,5 @@
+git clone -b master  https://github.com/036Michael/AI_Fall_Detection.git
+
 ## 注意！！！
 務必在專案裡創建 screenshots 資料夾
 
@@ -12,6 +14,9 @@ pip freeze > requirements.txt
 
 pip install -r requirements.txt
 
+
+
+python 3.10.14
 
 
 GPU 版本：
