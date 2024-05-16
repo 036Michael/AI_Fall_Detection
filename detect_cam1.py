@@ -61,10 +61,10 @@ def create_folder(folder_path):
 
 model = YOLO('yolov8n-pose.pt')
 
-video_path = 2
+video_path = 0
 cap = cv2.VideoCapture(video_path)
 
-ground_points = [(100, 200), (600, 200), (600, 400), (100, 400)]
+ground_points = [(113, 150), (500, 150), (1000, 600), (226, 450)]
 ground_polygon = Polygon(ground_points)
 
 last_screenshot_time = time.time()
@@ -83,6 +83,7 @@ while cap.isOpened():
 
     if success:
         results = model.predict(frame, conf=0.8)
+        # print(frame.shape)
 
         frame_count += 1
         elapsed_time = time.time() - start_time
@@ -162,9 +163,10 @@ while cap.isOpened():
                                 cv2.rectangle(
                                     annotated_frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 0, 255), 2)
                                 current_time = time.time()
-                                if send_notify and current_time - last_screenshot_time >= 10:
+                                if send_notify and current_time - last_screenshot_time >= 0.1:
                                     cv2.imwrite(
                                         f"{new_folder}/{o}.jpg", annotated_frame)
+                                    print("截圖儲存成功！")
                                     image = f"{new_folder}/{o}.jpg"
                                     o += 1
                                     last_screenshot_time = current_time
@@ -173,8 +175,7 @@ while cap.isOpened():
                                     print()
                                     print("截圖:", o, "張")
                                     print("有人跌倒！已發送Line-Notify到群組！")
-                                    lineNotify.check_response_Line(
-                                        t_formatted, image)
+                                    # lineNotify.check_response_Line(t_formatted, image)
 
         cv2.imshow("cam 1", frame)
 
