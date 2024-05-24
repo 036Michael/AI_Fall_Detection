@@ -64,7 +64,7 @@ model = YOLO('yolov8n-pose.pt')
 video_path = 0
 cap = cv2.VideoCapture(video_path)
 
-ground_points = [(113, 150), (500, 150), (1000, 600), (226, 450)]
+ground_points = [(113, 150), (1000, 150), (1000, 600), (226, 450)]
 ground_polygon = Polygon(ground_points)
 
 last_screenshot_time = time.time()
@@ -73,8 +73,21 @@ frame_count = 0
 start_time = time.time()
 
 formatted_time, ss, label = timeFormat()
+
+current_path = os.getcwd()
+target_path = (f"{current_path}\\screenshots")
+
+print(f"當前工作目錄是: {target_path}")
+
+if not os.path.exists(target_path):
+    os.makedirs(target_path)
+    print(f"文件夾 '{target_path}' 創建成功")
+
+else:
+    print(f"文件夾已存在")
+
 new_folder = create_folder(
-    'D:/coding-project/AI_Fall_Detection/screenshots/{}'.format(ss))
+    '{}/{}'.format(target_path, ss))
 
 fall_start_time = None
 
@@ -163,7 +176,7 @@ while cap.isOpened():
                                 cv2.rectangle(
                                     annotated_frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 0, 255), 2)
                                 current_time = time.time()
-                                if send_notify and current_time - last_screenshot_time >= 0.1:
+                                if send_notify and current_time - last_screenshot_time >= 10:
                                     cv2.imwrite(
                                         f"{new_folder}/{o}.jpg", annotated_frame)
                                     print("截圖儲存成功！")
@@ -175,7 +188,8 @@ while cap.isOpened():
                                     print()
                                     print("截圖:", o, "張")
                                     print("有人跌倒！已發送Line-Notify到群組！")
-                                    # lineNotify.check_response_Line(t_formatted, image)
+                                    lineNotify.check_response_Line(
+                                        t_formatted, image)
 
         cv2.imshow("cam 1", frame)
 
