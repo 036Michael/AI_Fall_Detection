@@ -5,9 +5,34 @@ from datetime import datetime
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator
 import lineNotify
+import numpy as np
 from shapely.geometry import Polygon, Point
+import pygame
 
 send_notify = True
+inside_polygon = False  # 用于追踪人物是否在地面范围内
+fall_start_time = None  # 跌倒开始时间
+notified = False  # 用于追踪是否已经发送了通知
+left_polygon_time = None  # 记录人物离开地面范围的时间
+
+# # Read logo and resize
+# logo = cv2.imread('./assets/falldown.png')
+# size = 100
+# logo = cv2.resize(logo, (size, size))
+
+# # Create a mask of logo
+# img2gray = cv2.cvtColor(logo, cv2.COLOR_BGR2GRAY)
+# ret, mask = cv2.threshold(img2gray, 1, 255, cv2.THRESH_BINARY)
+
+
+# 初始化 pygame mixer
+pygame.mixer.init()
+# 加載音效文件
+sound = pygame.mixer.Sound('assets/sound_effect/falldown_remind.mp3')
+
+
+def play_sound():
+    sound.play()
 
 
 def timeFormat():
@@ -32,14 +57,12 @@ def draw_text(img, text,
               text_color=(0, 255, 0),
               text_color_bg=(0, 0, 0)
               ):
-
     x, y = pos
     text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
     text_w, text_h = text_size
     cv2.rectangle(img, pos, (x + text_w, y + text_h), text_color_bg, -1)
     cv2.putText(img, text, (x, y + text_h + font_scale - 1),
                 font, font_scale, text_color, font_thickness)
-
     return text_size
 
 
@@ -64,7 +87,12 @@ model = YOLO('yolov8n-pose.pt')
 video_path = 0
 cap = cv2.VideoCapture(video_path)
 
-ground_points = [(113, 150), (1000, 150), (1000, 600), (226, 450)]
+ground_points = [(113, 150), (560, 100), (1000, 600), (226, 450)]  # 1280x720
+
+# 600x400
+# ground_points = [(113, 150), (400, 150), (400, 500), (226, 450)]
+
+
 ground_polygon = Polygon(ground_points)
 
 last_screenshot_time = time.time()
@@ -82,22 +110,22 @@ print(f"當前工作目錄是: {target_path}")
 if not os.path.exists(target_path):
     os.makedirs(target_path)
     print(f"文件夾 '{target_path}' 創建成功")
-
 else:
     print(f"文件夾已存在")
 
-new_folder = create_folder(
-    '{}/{}'.format(target_path, ss))
-
-fall_start_time = None
+new_folder = create_folder(f'{target_path}/{ss}')
 
 while cap.isOpened():
     success, frame = cap.read()
 
+    # roi = frame[-size-10:-10, -size-10:-10]
+
+    # # Set an index of where the mask is
+    # roi[np.where(mask)] = 0
+    # roi += logo
+
     if success:
         results = model.predict(frame, conf=0.8)
-        # print(frame.shape)
-
         frame_count += 1
         elapsed_time = time.time() - start_time
         fps = frame_count / elapsed_time
@@ -110,7 +138,9 @@ while cap.isOpened():
         for i in range(len(ground_points)):  # Draw ground polygon
             pt1 = ground_points[i]
             pt2 = ground_points[(i + 1) % len(ground_points)]
-            cv2.line(frame, pt1, pt2, (0, 255, 0), 1)
+            cv2.line(frame, pt1, pt2, (0, 255, 0), 3)
+
+        person_in_polygon = False
 
         for r in results:
             kps = r.keypoints
@@ -142,12 +172,11 @@ while cap.isOpened():
                     bbox[0] + (bbox[2] - bbox[0]) / 2, bbox[1] + (bbox[3] - bbox[1]) / 2)
 
                 if ground_polygon.contains(object_center):
-                    print("警報：有物件進入地面範圍內！")
+                    person_in_polygon = True
 
-                    if y2 - y1 > x2 - x1:   # 非跌倒
+                    if y2 - y1 > x2 - x1:  # 非跌倒
                         text = f"{classes} {conf})non-fall".format(
                             classes, conf)
-                        print(text)
                         annotator.box_label(i, text, color=(255, 0, 0))
                         fall_start_time = None  # Reset fall start time
                     else:  # 跌倒
@@ -157,39 +186,52 @@ while cap.isOpened():
                             fall_duration = time.time() - fall_start_time
                             text = f"{classes} {conf})fall down for {int(fall_duration)} seconds".format(
                                 classes, conf)
-                            annotator.box_label(i, text, color=(255, 0, 0))
+                            annotator.box_label(i, text, txt_color=(
+                                255, 255, 255), color=(0, 0, 255))
                             annotated_frame = annotator.result()
-                            if fall_duration >= 3:  # 跌倒超過3秒就執行
+                            if fall_duration >= 3 and not notified:  # 跌倒超過3秒且尚未通知
                                 text = f"{classes} {conf})fall down for {int(fall_duration)} seconds".format(
                                     classes, conf)
-                                annotator.box_label(i, text, color=(255, 0, 0))
+                                annotator.box_label(i, text, txt_color=(
+                                    255, 255, 255), color=(0, 0, 255))
                                 annotated_frame = annotator.result()
 
                                 for i in range(len(ground_points)):
                                     pt1 = ground_points[i]
                                     pt2 = ground_points[(
                                         i+1) % len(ground_points)]
-                                    cv2.line(frame, pt1, pt2, (0, 0, 255), 1)
+                                    cv2.line(frame, pt1, pt2, (0, 255, 0), 1)
                                     cv2.putText(
                                         frame, "alert", (10, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
                                 cv2.rectangle(
                                     annotated_frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 0, 255), 2)
                                 current_time = time.time()
-                                if send_notify and current_time - last_screenshot_time >= 10:
+                                if send_notify:
+                                    # if send_notify and current_time - last_screenshot_time >= 10:
                                     cv2.imwrite(
                                         f"{new_folder}/{o}.jpg", annotated_frame)
-                                    print("截圖儲存成功！")
                                     image = f"{new_folder}/{o}.jpg"
                                     o += 1
                                     last_screenshot_time = current_time
                                     t_formatted, ss, label = timeFormat()
                                     print("_____________________________________")
-                                    print()
                                     print("截圖:", o, "張")
                                     print("有人跌倒！已發送Line-Notify到群組！")
                                     lineNotify.check_response_Line(
                                         t_formatted, image)
+                                    notified = True  # 设置已通知标志
+
+        if not person_in_polygon:
+            if left_polygon_time is None:
+                # Start counting the time since the person left the polygon
+                left_polygon_time = time.time()
+            elif time.time() - left_polygon_time >= 3:
+                fall_start_time = None
+                notified = False  # 重置已通知标志
+                left_polygon_time = None  # 重置离开时间
+        else:
+            left_polygon_time = None  # Reset if the person is still inside the polygon
 
         cv2.imshow("cam 1", frame)
 
