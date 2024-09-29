@@ -15,17 +15,6 @@ fall_start_time = None  # 跌倒开始时间
 notified = False  # 用于追踪是否已经发送了通知
 left_polygon_time = None  # 记录人物离开地面范围的时间
 
-# # Read logo and resize
-# logo = cv2.imread('./assets/falldown.png')
-# size = 100
-# logo = cv2.resize(logo, (size, size))
-
-# # Create a mask of logo
-# img2gray = cv2.cvtColor(logo, cv2.COLOR_BGR2GRAY)
-# ret, mask = cv2.threshold(img2gray, 1, 255, cv2.THRESH_BINARY)
-
-
-
 # 初始化 pygame mixer
 pygame.mixer.init()
 # 加載音效文件
@@ -34,7 +23,6 @@ sound = pygame.mixer.Sound('assets/sound_effect/falldown_remind.mp3')
 
 def play_sound():
     sound.play()
-
 
 
 def timeFormat():
@@ -88,13 +76,10 @@ model = YOLO('yolov8n-pose.pt')
 
 
 # video_path = 1
-video_path = 2
+video_path = 1
 cap = cv2.VideoCapture(video_path)
 
-ground_points = [(100, 150), (550, 150), (550, 400), (100, 400)]  # 1280x720
-
-# 600x400
-# ground_points = [(113, 150), (400, 150), (400, 500), (100, 500)]
+ground_points = [(100, 150), (550, 150), (550, 400), (100, 400)]  # 長方形
 
 
 ground_polygon = Polygon(ground_points)
@@ -107,7 +92,7 @@ start_time = time.time()
 formatted_time, ss, label = timeFormat()
 
 current_path = os.getcwd()
-target_path = (f"{current_path}\\screenshots")
+target_path = (f"{current_path}\\screenshots\\cam2\\")
 
 print(f"當前工作目錄是: {target_path}")
 

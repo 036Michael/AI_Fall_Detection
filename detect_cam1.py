@@ -82,18 +82,19 @@ def create_folder(folder_path):
             i += 1
 
 
+# Load the Yolov8 model
 model = YOLO('yolov8n-pose.pt')
 
 video_path = 0
 cap = cv2.VideoCapture(video_path)
 
+# 定義地面多邊形
+# 左上 右上 右下 左下
 ground_points = [(113, 150), (560, 100), (1000, 600), (226, 450)]  # 1280x720
+ground_polygon = Polygon(ground_points)
 
 # 600x400
 # ground_points = [(113, 150), (400, 150), (400, 500), (226, 450)]
-
-
-ground_polygon = Polygon(ground_points)
 
 last_screenshot_time = time.time()
 o = 0
@@ -103,7 +104,7 @@ start_time = time.time()
 formatted_time, ss, label = timeFormat()
 
 current_path = os.getcwd()
-target_path = (f"{current_path}\\screenshots")
+target_path = (f"{current_path}\\screenshots\\cam1\\")
 
 print(f"當前工作目錄是: {target_path}")
 
@@ -146,7 +147,7 @@ while cap.isOpened():
             kps = r.keypoints
             for kp in kps:
                 list_p = kp.data.tolist()
-
+        # 提取邊框的坐標點
         for i in results[0].boxes.xyxy:
             x1 = int(i[0])
             y1 = int(i[1])
@@ -220,6 +221,7 @@ while cap.isOpened():
                                     print("有人跌倒！已發送Line-Notify到群組！")
                                     lineNotify.check_response_Line(
                                         t_formatted, image)
+                                    play_sound()
                                     notified = True  # 设置已通知标志
 
         if not person_in_polygon:
