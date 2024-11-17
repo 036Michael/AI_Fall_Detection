@@ -1,53 +1,77 @@
 import cv2
 from ultralytics import YOLO
+import time
+from datetime import datetime
+import pandas as pd
+ 
+# 匯入自定義常數
+from constants import body_parts_colors 
+
+# 匯入自己的函式庫
+from utils import timeFormat,draw_text
+from logic import fall_detection
 
 # Load YOLOv8 pose model
-model = YOLO('yolov8n-pose.pt')
+model = YOLO('yolov8m-pose.pt')
 
-# Start video capture
-cap = cv2.VideoCapture(2)  # Use the webcam as the source (index may vary)
+# 將顏色轉換為 OpenCV 格式
+colors = [color[::-1] for color in body_parts_colors.values()] # 將顏色轉換為 RGB 格式
+body_parts_names = [names[::1] for names in body_parts_colors.keys()] # 部位名稱
 
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
+with open("fall.txt", "a") as f:
+    f.write("23行開始\n")
+
+cap = cv2.VideoCapture(0) 
+
+def process_frame(frame):
+    global fall_start_time  # 確保可以修改全域變數 fall_start_time
 
     # Predict using YOLO model
-    results = model.predict(source=frame, conf=0.8, show=False)
 
+    results = model.track(source=frame, conf=0.7)
+    _, ss, label = timeFormat()
+
+    draw_text(frame, ss + label, font_scale=1,
+                  pos=(10, 10), text_color_bg=(255, 0, 0))
+
+    # 偵測跌倒
+
+    # 偵測人臉
     # Extract keypoints and bounding boxes from the results
     for result in results:
-        # Check if any persons are detected
         if len(result.keypoints) > 0 and len(result.boxes) > 0:
-            # Extract keypoints and bounding box
             keypoints = result.keypoints.xy.tolist()[0]  # Assuming only one person is detected
-            boxes = result.boxes.xyxy.tolist()[0]  # Extract the bounding box for the detected person
-            x1, y1, x2, y2 = map(int, boxes)  # Convert the bounding box to integer values
+            boxes = result.boxes.xyxy.tolist()[0]
 
-            # Find coordinates of the keypoint (e.g., keypoints[0])
-            if len(keypoints) > 0:
-                head_x, head_y = keypoints[0]  # Coordinates of the specific keypoint (e.g., head)
+            frame = result.plot(kpt_line=True,boxes=False,labels=False)
 
-                # Draw a gray rectangle from the keypoint down to the bottom of the bounding box
-                top_left = (x1, int(head_y))
-                bottom_right = (x2, y2)
-                cv2.rectangle(frame, top_left, bottom_right, (128, 128, 128), thickness=-1)
+            # Draw keypoints and bounding boxes
+            for i, (x, y) in enumerate(keypoints):
+                x = int(x)
+                y = int(y)
+                cv2.circle(frame, (x, y), 4, colors[i], -1)
+                cv2.putText(frame, str(i), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors[i], 2)
 
-            # Overlay the keypoints and other results on the frame
-            frame = result.plot()
+            frame = fall_detection(frame,keypoints,boxes) 
+            
+    return frame
 
-            # Debugging: print keypoints
-            print("=" * 80)
-            print("點：", keypoints)
-            print("=" * 80)
+def main():
+    """主函數，處理影像流"""
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-    # Display the processed frame
-    cv2.imshow('Grayscale Person Detection', frame)
+        # 處理影像並顯示
+        frame = process_frame(frame)
+        cv2.imshow('Fall Detection', frame)
 
-    # Exit loop on 'q' key press
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-# Release the video capture object and close display window
-cap.release()
-cv2.destroyAllWindows()
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()

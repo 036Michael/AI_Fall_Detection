@@ -9,7 +9,7 @@ import numpy as np
 from shapely.geometry import Polygon, Point
 import pygame
 
-send_notify = True
+send_notify = False
 inside_polygon = False  # 用于追踪人物是否在地面范围内
 fall_start_time = None  # 跌倒开始时间
 notified = False  # 用于追踪是否已经发送了通知
@@ -85,7 +85,7 @@ def create_folder(folder_path):
 # Load the Yolov8 model
 model = YOLO('yolov8n-pose.pt')
 
-video_path = 0
+video_path = 2
 cap = cv2.VideoCapture(video_path)
 
 # 定義地面多邊形
@@ -118,7 +118,6 @@ new_folder = create_folder(f'{target_path}/{ss}')
 
 while cap.isOpened():
     success, frame = cap.read()
-
     # roi = frame[-size-10:-10, -size-10:-10]
 
     # # Set an index of where the mask is
@@ -131,7 +130,6 @@ while cap.isOpened():
         elapsed_time = time.time() - start_time
         fps = frame_count / elapsed_time
         fps = str(round(fps, 2))
-
         f, ss, label = timeFormat()
         draw_text(frame, ss + label, font_scale=2,
                   pos=(10, 20), text_color_bg=(255, 0, 0))
@@ -142,7 +140,6 @@ while cap.isOpened():
             cv2.line(frame, pt1, pt2, (0, 255, 0), 3)
 
         person_in_polygon = False
-
         for r in results:
             kps = r.keypoints
             for kp in kps:
@@ -153,15 +150,11 @@ while cap.isOpened():
             y1 = int(i[1])
             x2 = int(i[2])
             y2 = int(i[3])
-
             annotator = Annotator(frame)
-
             conf = results[0].boxes.conf[0]
             conf = str(conf)
             conf = conf[6:11]
-
             classes = results[0].names[0]
-
             boxess = [{'bbox': [x1, y1, x2, y2]}]
             for obj in boxess:
 

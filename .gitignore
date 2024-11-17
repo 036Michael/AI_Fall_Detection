@@ -1,1 +1,5 @@
 screenshots/
+screenshotsss_jpg/
+__pycache__/
+
+*.pt

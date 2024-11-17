@@ -1,26 +1,25 @@
-git clone -b master  https://github.com/036Michael/AI_Fall_Detection.git
+git clone -b master https://github.com/036Michael/AI_Fall_Detection.git
 
 ## 注意！！！
+
 務必在專案裡創建 screenshots 資料夾
 
 ## 安裝套件
-凍結套件在requirements.txt 方便給別人直接裝：
+
+凍結套件在 requirements.txt 方便給別人直接裝：
 
 把用到的套件寫入.txt
 
-pip freeze > requirements.txt 
+pip freeze > requirements.txt
 
 讀取並安裝至自己的環境
 
 pip install -r requirements.txt
 
-
-
 python 3.10.14
 
-
 GPU 版本：
-rtx 4060 
+rtx 4060
 Driver Version: 546.32
 
 顯卡最高支援的 CUDA 版本
@@ -30,3 +29,24 @@ CUDA Version: 12.3.107
 CUDA Toolkit 12.3 Update 1 Downloads
 
 cuda toolkit 12.3.1
+
+1 鼻子
+2 左眼
+3 右眼
+4 左耳
+5 右耳
+6 左肩膀
+7 右肩膀
+8 左手肘
+9 右手肘
+10 左手碗
+11 右手碗
+12 左腰部
+13 右腰部
+14 左膝蓋
+15 右膝蓋
+16 左腳跟
+17 右腳跟
+
+yolov8 pose 的超參數設定
+https://docs.ultralytics.com/modes/predict/

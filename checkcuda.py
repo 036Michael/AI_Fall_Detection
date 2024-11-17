@@ -4,9 +4,8 @@ import torch
 x = torch.rand(5, 3)
 print(x)
 
-
 # Open the first camera connected to the computer.
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 
 # Check if the camera opened successfully
 if not cap.isOpened():
